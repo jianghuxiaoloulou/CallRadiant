@@ -1,0 +1,23 @@
+﻿Server:
+  RunMode: debug
+  # RunMode: release
+  UDPPort: 29001
+  SepCmd: $CMD_CON$
+  SepCon: $CON_CON$
+
+General:
+  LogSavePath: storage/logs
+  LogFileName: log
+  LogFileExt: .log
+  LogMaxSize: 60
+  LogMaxAge: 7
+  MaxThreads: 100
+  MaxTasks: 100
+Object:
+  # 影像接口[get]
+  IMAGE_URL: http://wpacs.shulan.com/app/study/getStudyAndSeriesById?uidEnc=
+  # Radiant程序路径
+  RadiantPath: C:\\Program Files\\RadiAntViewer64bit\\RadiAntViewer.exe
+  # 判断是否开启下载模式 0:关闭， 1：开启
+  CheckMode: 1
+  
