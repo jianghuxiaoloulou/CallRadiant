@@ -53,7 +53,6 @@ func ParseUDPData(RecData string) {
 		global.Logger.Error("UDP接收的数据不是有效数据，程序丢弃")
 		return
 	}
-
 	index := strings.Index(RecData, global.ServerSetting.SepCon)
 	objtype, _ := strconv.Atoi(RecData[index-1 : index])
 	global.Logger.Debug("objtype: ", objtype)
@@ -65,6 +64,7 @@ func ParseUDPData(RecData string) {
 	case global.DOWN_MODE_ENABLE:
 		global.Logger.Debug("开启下载模式: ", objvalue)
 		// 调用服务端接口，下载数据
+		go CallDown(objvalue)
 	default:
 		global.Logger.Debug("未开启下载模式，直接打开影像...")
 	}
@@ -190,6 +190,33 @@ func RemoveDuplicate(arr []string) []string {
 }
 
 // 调用服务端下载接口
-func CallDown() string {
-	return ""
+func CallDown(uid_enc string) {
+	// 通过接口下载数据
+	global.Logger.Debug("开始调用下载影像接口")
+	url := global.ObjectSetting.Down_URL
+	url += uid_enc
+	global.Logger.Debug("操作的URL: ", url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		global.Logger.Error("调用下载影像接口失败：", err, uid_enc)
+		return
+	}
+	transport := http.Transport{
+		DisableKeepAlives: true,
+	}
+	client := &http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		global.Logger.Error("Do Request got err: ", err)
+		return
+	}
+	defer resp.Body.Close()
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		global.Logger.Error("Read resp.Body got err: ", err)
+		return
+	}
+	global.Logger.Debug("resp.Body: ", string(content))
 }

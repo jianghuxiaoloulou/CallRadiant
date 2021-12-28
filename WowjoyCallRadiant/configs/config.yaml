@@ -18,4 +18,8 @@ Object:
   IMAGE_URL: http://wpacs.shulan.com/app/study/getStudyAndSeriesById?uidEnc=
   # Radiant程序路径
   RadiantPath: C:\\Program Files\\RadiAntViewer64bit\\RadiAntViewer.exe
+  # 判断是否开启下载模式 0:关闭， 1：开启
+  CheckMode: 1
+  # 影像下载URL[GET]
+  Down_URL: http://127.0.0.1:9000/api/v1/Object/Down/UidEnc/
   

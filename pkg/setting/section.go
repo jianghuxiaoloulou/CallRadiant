@@ -21,6 +21,7 @@ type ObjectSettingS struct {
 	IMAGE_URL   string
 	RadiantPath string
 	CheckMode   int
+	Down_URL    string
 }
 
 func (s *Setting) ReadSection(k string, v interface{}) error {

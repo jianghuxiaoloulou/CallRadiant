@@ -12,7 +12,7 @@ import (
 // @title 调用Radiant程序
 // @version 1.0.0.1
 // @description 调用Radiant看图软件
-// @termsOfService https://github.com/jianghuxiaoloulou/.git
+// @termsOfService https://github.com/jianghuxiaoloulou/CallRadiant.git
 func main() {
 	global.RadiantParam = make([]string, 0)
 	global.Logger.Info("*******开始运行调用Radiant程序********")
