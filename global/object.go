@@ -3,8 +3,10 @@ package global
 var RadiantParam []string
 
 const (
-	IMAGE_REVIEW      int = 1 // 影像查看
-	APPEND_IMAGE_VIEW int = 4 // 追加影像查看
+	IMAGE_REVIEW      int = 1  // 影像查看
+	FILM_PRINT        int = 3  // 胶片直接打印
+	APPEND_IMAGE_VIEW int = 4  // 追加影像查看
+	APPEND_FILM_PRINT int = 18 // 胶片追加打印
 )
 
 const (

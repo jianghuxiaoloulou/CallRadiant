@@ -4,6 +4,10 @@
   UDPPort: 29001
   SepCmd: $CMD_CON$
   SepCon: $CON_CON$
+  # 打印胶片通知功能
+  UDPFilmPort: 38007
+  CleanFilmData: 201
+  SendFilmCmd: 228
 
 General:
   LogSavePath: storage/logs

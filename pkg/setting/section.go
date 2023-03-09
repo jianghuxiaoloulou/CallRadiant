@@ -1,10 +1,13 @@
 package setting
 
 type ServerSettingS struct {
-	RunMode string
-	UDPPort string
-	SepCmd  string
-	SepCon  string
+	RunMode       string
+	UDPPort       string
+	SepCmd        string
+	SepCon        string
+	UDPFilmPort   string
+	CleanFilmData string
+	SendFilmCmd   string
 }
 
 type GeneralSettingS struct {

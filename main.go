@@ -77,6 +77,7 @@ func (d *Dosomething) Do() {
 	global.Logger.Info("正在处理的数据是：", d.key)
 	//处理封装对象
 	obj := object.NewObject(d.key)
+	global.Logger.Debug(obj)
 	switch d.key.ParamType {
 	case global.IMAGE_REVIEW:
 		// 影像查看
@@ -84,5 +85,11 @@ func (d *Dosomething) Do() {
 	case global.APPEND_IMAGE_VIEW:
 		// 追加影像查看
 		obj.Append_Image_View()
+	case global.FILM_PRINT:
+		// 胶片直接打印
+		obj.Film_Print()
+	case global.APPEND_FILM_PRINT:
+		// 胶片追加打印
+		obj.Append_Film_Print()
 	}
 }

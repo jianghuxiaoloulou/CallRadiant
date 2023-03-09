@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os/exec"
 	"strconv"
@@ -46,6 +47,56 @@ func (obj *Object) Append_Image_View() {
 	CallRadiAnt(global.RadiantParam)
 }
 
+// 胶片直接打印
+func (obj *Object) Film_Print() {
+	global.Logger.Info("胶片直接打印")
+	SliceClear(&global.RadiantParam)
+	global.RadiantParam = append(global.RadiantParam, obj.Paths...)
+	CallFilm(true, global.RadiantParam)
+}
+
+// 胶片追加打印
+func (obj *Object) Append_Film_Print() {
+	global.Logger.Info("胶片追加打印")
+	SliceClear(&global.RadiantParam)
+	global.RadiantParam = append(global.RadiantParam, obj.Paths...)
+	CallFilm(false, global.RadiantParam)
+}
+
+// 发送数据给打印胶片程序
+func CallFilm(flag bool, arg []string) {
+	arg = RemoveDuplicate(arg)
+	var tem_arg string
+	tem_arg = global.ServerSetting.SendFilmCmd
+	tem_arg += global.ServerSetting.SepCmd
+	for _, k := range arg {
+		tem_arg += k
+		tem_arg += ","
+	}
+	tem_arg = tem_arg[:len(tem_arg)-1]
+
+	address := "127.0.0.1" + ":" + global.ServerSetting.UDPFilmPort
+	raddr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		global.Logger.Error(err)
+	}
+
+	conn, err := net.DialUDP("udp", nil, raddr)
+	if err != nil {
+		global.Logger.Error("Dial.err", err)
+		return
+	}
+	defer conn.Close()
+	if flag {
+		global.Logger.Info("发送清空打印胶片数据命令：", global.ServerSetting.CleanFilmData)
+		conn.Write([]byte(global.ServerSetting.CleanFilmData))
+	}
+	global.Logger.Info("打印胶片发送命令：", string(tem_arg))
+	conn.Write([]byte(tem_arg))
+	// 发送显示窗口
+	conn.Write([]byte("222$CMD_CON$1"))
+}
+
 // 解析UDP数据
 func ParseUDPData(RecData string) {
 	global.Logger.Info("开始解析UDP数据")
@@ -53,10 +104,12 @@ func ParseUDPData(RecData string) {
 		global.Logger.Error("UDP接收的数据不是有效数据，程序丢弃")
 		return
 	}
-	index := strings.Index(RecData, global.ServerSetting.SepCon)
-	objtype, _ := strconv.Atoi(RecData[index-1 : index])
+	indexSepCmd := strings.Index(RecData, global.ServerSetting.SepCmd)
+	indexSepCon := strings.Index(RecData, global.ServerSetting.SepCon)
+
+	objtype, _ := strconv.Atoi(RecData[indexSepCmd+len(global.ServerSetting.SepCmd) : indexSepCon])
 	global.Logger.Debug("objtype: ", objtype)
-	objvalue := RecData[index+len(global.ServerSetting.SepCon):]
+	objvalue := RecData[indexSepCon+len(global.ServerSetting.SepCon):]
 	global.Logger.Debug("objvalue: ", objvalue)
 
 	// 判断是否开启下载模式
@@ -64,7 +117,7 @@ func ParseUDPData(RecData string) {
 	case global.DOWN_MODE_ENABLE:
 		global.Logger.Debug("开启下载模式: ", objvalue)
 		// 调用服务端接口，下载数据
-		go CallDown(objvalue)
+		CallDown(objvalue)
 	default:
 		global.Logger.Debug("未开启下载模式，直接打开影像...")
 	}
@@ -123,29 +176,52 @@ func GetImagePath(uid_enc string) (paths []string) {
 		}
 	}
 	if vResult, ok := result["result"]; ok {
-		resultMap := vResult.(map[string]interface{})
-		if vSeriesList, ok := resultMap["seriesList"]; ok {
-			seriesList := vSeriesList.([]interface{})
-			for _, seriesListItem := range seriesList {
-				seriesListMap := seriesListItem.(map[string]interface{})
-				if vInstanceList, ok := seriesListMap["instanceList"]; ok {
-					instanceList := vInstanceList.([]interface{})
-					for _, instanceListItem := range instanceList {
-						instanceListMap := instanceListItem.(map[string]interface{})
-						fileName := instanceListMap["fileName"].(string)
-						index := strings.LastIndex(fileName, "\\")
-						fileName = fileName[:index]
-						ip := instanceListMap["ip"].(string)
-						sVirtualDir := instanceListMap["sVirtualDir"].(string)
-						// 字符串拼接
-						var buff bytes.Buffer
-						buff.WriteString("\\\\")
-						buff.WriteString(ip)
-						buff.WriteString("\\")
-						buff.WriteString(sVirtualDir)
-						buff.WriteString("\\")
-						buff.WriteString(fileName)
-						paths = append(paths, buff.String())
+		if vResult != nil {
+			resultMap := vResult.(map[string]interface{})
+			if vSeriesList, ok := resultMap["seriesList"]; ok {
+				if vSeriesList != nil {
+					seriesList := vSeriesList.([]interface{})
+					for _, seriesListItem := range seriesList {
+						if seriesListItem != nil {
+							seriesListMap := seriesListItem.(map[string]interface{})
+							if vInstanceList, ok := seriesListMap["instanceList"]; ok {
+								if vInstanceList != nil {
+									instanceList := vInstanceList.([]interface{})
+									for _, instanceListItem := range instanceList {
+										if instanceListItem != nil {
+											instanceListMap := instanceListItem.(map[string]interface{})
+											var fileName, ip, sVirtualDir string
+											if vfileName, ok := instanceListMap["fileName"]; ok {
+												fileName = vfileName.(string)
+												index := strings.LastIndex(fileName, "\\")
+												fileName = fileName[:index]
+											} else {
+												continue
+											}
+											if vip, ok := instanceListMap["ip"]; ok {
+												ip = vip.(string)
+											} else {
+												continue
+											}
+											if vsVirtualDir, ok := instanceListMap["sVirtualDir"]; ok {
+												sVirtualDir = vsVirtualDir.(string)
+											} else {
+												continue
+											}
+											// 字符串拼接
+											var buff bytes.Buffer
+											buff.WriteString("\\\\")
+											buff.WriteString(ip)
+											buff.WriteString("\\")
+											buff.WriteString(sVirtualDir)
+											buff.WriteString("\\")
+											buff.WriteString(fileName)
+											paths = append(paths, buff.String())
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 			}

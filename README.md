@@ -64,5 +64,8 @@ go get -u github.com/juju/ratelimit@v1.0.1
 # git push -u origin master
 
 ## 修改记录
+2023-03-09: 增加打印胶片功能
 2021-12-28：增加调用下载数据的接口
 
+32位：go env -w GOARCH=386
+64位：go env -w GOARCH=amd64
