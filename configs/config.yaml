@@ -21,9 +21,11 @@ Object:
   # 影像接口[get]
   IMAGE_URL: http://wpacs.shulan.com/app/study/getStudyAndSeriesById?uidEnc=
   # Radiant程序路径
-  RadiantPath: C:\\Program Files\\RadiAntViewer64bit\\RadiAntViewer.exe
+  RadiantPath: C:\Program Files\RadiAntViewer64bit\RadiAntViewer.exe
   # 判断是否开启下载模式 0:关闭， 1：开启
-  CheckMode: 1
+  CheckMode: 0
   # 影像下载URL[GET]
   Down_URL: http://127.0.0.1:9000/api/v1/Object/Down/UidEnc/
+  # 调用RA方式 1：共享，2：QR
+  CallRAType: 2
   

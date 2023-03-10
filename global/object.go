@@ -1,6 +1,12 @@
 package global
 
 var RadiantParam []string
+var QRRadiantParam []string
+
+const (
+	CallRadiantType_Share int = 1 // 共享方式访问文件
+	CallRadiantType_QR    int = 2 // QR方式访问文件
+)
 
 const (
 	IMAGE_REVIEW      int = 1  // 影像查看

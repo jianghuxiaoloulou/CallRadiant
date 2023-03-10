@@ -64,6 +64,7 @@ go get -u github.com/juju/ratelimit@v1.0.1
 # git push -u origin master
 
 ## 修改记录
+2023-03-10: 增加QR调阅功能
 2023-03-09: 增加打印胶片功能
 2021-12-28：增加调用下载数据的接口
 

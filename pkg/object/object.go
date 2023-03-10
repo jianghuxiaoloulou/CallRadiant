@@ -16,35 +16,50 @@ import (
 
 // 封装对象相关操作
 type Object struct {
-	Type  int
-	Value string
-	Paths []string
+	Type            int
+	Value           string
+	Paths           []string
+	AccessionNumber string
 }
 
 func NewObject(data global.RadiantData) *Object {
 	// 获取文件查看影像路径
 	paths := make([]string, 0)
-	paths = GetImagePath(data.ParamValue)
+	aceNum, paths := GetImagePath(data.ParamValue)
 	return &Object{
-		Type:  data.ParamType,
-		Value: data.ParamValue,
-		Paths: paths,
+		Type:            data.ParamType,
+		Value:           data.ParamValue,
+		Paths:           paths,
+		AccessionNumber: aceNum,
 	}
 }
 
 // 影像查看IMAGE_REVIEW
 func (obj *Object) Image_Review() {
 	global.Logger.Info("影像查看")
-	SliceClear(&global.RadiantParam)
-	global.RadiantParam = append(global.RadiantParam, obj.Paths...)
-	CallRadiAnt(global.RadiantParam)
+	switch global.ObjectSetting.CallRAType {
+	case global.CallRadiantType_Share:
+		SliceClear(&global.RadiantParam)
+		global.RadiantParam = append(global.RadiantParam, obj.Paths...)
+		CallRadiAnt(global.RadiantParam)
+	case global.CallRadiantType_QR:
+		SliceClear(&global.QRRadiantParam)
+		global.QRRadiantParam = append(global.QRRadiantParam, obj.AccessionNumber)
+		CallRadiAntQR(global.QRRadiantParam)
+	}
 }
 
 // 追加影像查看APPEND_IMAGE_VIEW
 func (obj *Object) Append_Image_View() {
 	global.Logger.Info("追加影像查看")
-	global.RadiantParam = append(global.RadiantParam, obj.Paths...)
-	CallRadiAnt(global.RadiantParam)
+	switch global.ObjectSetting.CallRAType {
+	case global.CallRadiantType_Share:
+		global.RadiantParam = append(global.RadiantParam, obj.Paths...)
+		CallRadiAnt(global.RadiantParam)
+	case global.CallRadiantType_QR:
+		global.QRRadiantParam = append(global.QRRadiantParam, obj.AccessionNumber)
+		CallRadiAntQR(global.QRRadiantParam)
+	}
 }
 
 // 胶片直接打印
@@ -129,7 +144,7 @@ func ParseUDPData(RecData string) {
 }
 
 // 获取查看影像的路径
-func GetImagePath(uid_enc string) (paths []string) {
+func GetImagePath(uid_enc string) (accessionNumber string, paths []string) {
 	// 通过接口获取路径
 	global.Logger.Debug("开始调用后台接口获取影像信息")
 	url := global.ObjectSetting.IMAGE_URL
@@ -178,6 +193,9 @@ func GetImagePath(uid_enc string) (paths []string) {
 	if vResult, ok := result["result"]; ok {
 		if vResult != nil {
 			resultMap := vResult.(map[string]interface{})
+			if vaccessionNumber, ok := resultMap["accessionNumber"]; ok {
+				accessionNumber = vaccessionNumber.(string)
+			}
 			if vSeriesList, ok := resultMap["seriesList"]; ok {
 				if vSeriesList != nil {
 					seriesList := vSeriesList.([]interface{})
@@ -244,6 +262,31 @@ func CallRadiAnt(arg []string) {
 	tem_arg = append(tem_arg, "-f")
 	tem_arg = append(tem_arg, "-d")
 	tem_arg = append(tem_arg, arg...)
+	global.Logger.Info(exepath, " 参数是：", tem_arg)
+	cmd := exec.Command(exepath, tem_arg...)
+	if err := cmd.Run(); err != nil {
+		global.Logger.Error("打开Radiant程序失败")
+	}
+}
+
+// 调用Radiant客户端通过QR
+func CallRadiAntQR(arg []string) {
+	exepath := global.ObjectSetting.RadiantPath
+	arg = RemoveDuplicate(arg)
+	tem_arg := make([]string, 0)
+	arglen := len(arg)
+	tem_arg = append(tem_arg, "-cl")
+	if arglen <= 1 {
+		tem_arg = append(tem_arg, "-pstv")
+		tem_arg = append(tem_arg, "00080050")
+		tem_arg = append(tem_arg, arg...)
+	} else {
+		for _, value := range arg {
+			tem_arg = append(tem_arg, "-pstv")
+			tem_arg = append(tem_arg, "00080050")
+			tem_arg = append(tem_arg, value)
+		}
+	}
 	global.Logger.Info(exepath, " 参数是：", tem_arg)
 	cmd := exec.Command(exepath, tem_arg...)
 	if err := cmd.Run(); err != nil {
